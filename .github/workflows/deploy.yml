@@ -1,0 +1,52 @@
+name: Release & Deploy
+on:
+  push:
+    branches:
+      - main
+    paths-ignore: 
+    - '.github/workflows/**'
+    - './README.md'
+  workflow_dispatch:
+jobs:
+  build:
+    name: Build 
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies & Build
+        run: |
+          npm install
+          npm run build --if-present
+      - name: Bump version and create tag
+        run: |
+          npm version patch -m "Bump version to %s"
+          VERSION=$(node -p "require('./package.json').version")
+          git tag -a v$VERSION -m "Release version $VERSION"
+          git push origin v$VERSION
+      - name: Upload Build Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    permissions:
+      pages: write # to deploy to Pages
+      id-token: write # to verify the deployment originates from an appropriate source
+
+    # Deploy to the github-pages environment
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
