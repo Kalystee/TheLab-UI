@@ -30,7 +30,7 @@ jobs:
           git config --global user.email 'action@github.com'
           npm version patch -m "Bump version to %s"
           VERSION=$(node -p "require('./package.json').version")
-          git tag -a v$VERSION -m "Release version $VERSION"
+          git tag -f v$VERSION -m "Release version $VERSION"
           git push origin v$VERSION
       - name: Upload Build Artifact
         uses: actions/upload-pages-artifact@v3
